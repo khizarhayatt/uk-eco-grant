@@ -292,7 +292,7 @@
     </div>
 </div>
 <script id="hidden-columns-table-leads" type="text/json">
-< ? php echo get_staff_meta(get_staff_user_id(), 'hidden-columns-table-leads'); ? >
+<?php echo get_staff_meta(get_staff_user_id(), 'hidden-columns-table-leads'); ?>
 </script>
 <?php include_once(APPPATH . 'views/admin/leads/status.php'); ?>
 <?php init_tail(); ?>

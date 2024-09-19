@@ -376,6 +376,30 @@
                                 </div>
                             </div>
 
+                            <!-- ready_for_booking -->
+                            <div class="col-md-12">
+                                <div class="form-group chk">
+                                    <div class="checkbox checkbox-inline">
+                                        <input class="custom_field_checkbox"
+                                            value="ready_for_booking"
+                                            id="ready_for_booking"
+                                            type="checkbox"
+                                            onchange="updateWorkflowStatus(this)"
+                                            name="ready_for_booking"
+                                            <?php echo isset($workflow_statuses['ready_for_booking']) && $workflow_statuses['ready_for_booking']['status_value'] == 1 ? 'checked' : ''; ?>>
+                                        <label for="ready_for_booking" class="cf-chk-label">Ready For Booking</label>
+                                    </div>
+
+                                    <?php if (isset($workflow_statuses['ready_for_booking']) && $workflow_statuses['ready_for_booking']['status_value'] == 1): ?>
+                                        <div class="form-group">
+                                            <?php echo htmlspecialchars(get_staff_full_name($workflow_statuses['ready_for_booking']['user_id'])); ?>
+                                            at
+                                            <?php echo date('F j, Y, g:i:s a', strtotime($workflow_statuses['ready_for_booking']['timestamp'])); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
                             <!-- Under Installation -->
                             <div class="col-md-12">
                                 <div class="form-group chk">

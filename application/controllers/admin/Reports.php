@@ -1243,95 +1243,45 @@ class Reports extends AdminController
 
     /* Workflows Reports dATA */
      /* Workflows Reports Data */
-public function workflows_report_data()
-{
-    if ($this->input->is_ajax_request()) {
-        $start_date = $this->input->post('start_date');
-        $end_date = $this->input->post('end_date');
-        $staff_id = $this->input->post('staff_id');
-        $workflow_status = $this->input->post('workflow_status');
-
-        // Define columns to fetch from the database
-        $aColumns = [
-            'status_id',
-            'status_type',
-            'status_value',
-            'customer_id',
-            'user_id',
-            'date_updated',
-            'company'
-        ];
-        
-        $sIndexColumn = "status_id";
-        $sTable = db_prefix() . 'client_worflow_statuses';
-        
-        // Define JOIN
-        $join = [
-            'LEFT JOIN ' . db_prefix() . 'clients ON ' . db_prefix() . 'clients.userid = ' . db_prefix() . 'client_worflow_statuses.customer_id'
-        ];
-        
-        // Define WHERE conditions
-        $where = [];
-
-        if ($start_date) {
-            array_push($where, 'AND ' . db_prefix() . 'client_worflow_statuses.date_updated >= "' . $this->db->escape_str($start_date) . '"');
-        }
-        if ($end_date) {
-            array_push($where, 'AND ' . db_prefix() . 'client_worflow_statuses.date_updated <= "' . $this->db->escape_str($end_date) . '"');
-        }
-        if ($staff_id) {
-            array_push($where, 'AND ' . db_prefix() . 'client_worflow_statuses.user_id = ' . $this->db->escape_str($staff_id));
-        }
-        if ($workflow_status) {
-            array_push($where, 'AND ' . db_prefix() . 'client_worflow_statuses.status_type = "' . $this->db->escape_str($workflow_status) . '"');
-        }
-
-        // Corrected ORDER BY clause
-        $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
-            db_prefix() . 'client_worflow_statuses.status_id',
-            db_prefix() . 'client_worflow_statuses.status_type',
-            db_prefix() . 'client_worflow_statuses.status_value',
-            db_prefix() . 'client_worflow_statuses.customer_id',
-            db_prefix() . 'client_worflow_statuses.user_id',
-            db_prefix() . 'client_worflow_statuses.date_updated',
-        ], 'date_updated DESC');  // Correctly order by date_updated in descending order
-
-        $output = $result['output'];
-        $rResult = $result['rResult'];
-
-        // Iterate over each result row
-        foreach ($rResult as $aRow) {
-            $row = [];
-            foreach ($aColumns as $col) {
-                if ($col == 'status_value') {
-                    // Display status as 'Completed' or 'In Progress'
-                    $row[] = $aRow['status_value'] == 1 ? 'Completed' : 'In Progress';
-                } elseif ($col == 'user_id') {
-                    // Fetch the staff full name
-                    $row[] = $this->get_staff_full_name($aRow['user_id']);
-                } else {
-                    // Fallback if column data is missing
-                    $row[] = isset($aRow[$col]) ? $aRow[$col] : '';
-                }
-            }
-            $output['aaData'][] = $row;
-        }
-
-        echo json_encode($output);
-        die();
-    }
-}
-
-// Helper function to get staff full name
-private function get_staff_full_name($staff_id)
-{
-    $this->db->select('CONCAT(firstname, " ", lastname) as full_name');
-    $this->db->from(db_prefix() . 'staff');
-    $this->db->where('staffid', $staff_id);
-    $query = $this->db->get();
-    $result = $query->row();
-    return $result ? $result->full_name : 'Unknown';
-}
-
-    
+     public function workflows_report_data()
+     {
+        $period_from = date('Y-m-d', strtotime($this->input->post('period_from')));
+        $period_to = date('Y-m-d', strtotime($this->input->post('period_to')));
+        $lead_status = $this->input->post('lead_status');
+        $lead_source = $this->input->post('lead_source');
+     
+         // Log the incoming filter data
+         log_message('debug', 'Filter Data: period_from=' . $period_from . ', period_to=' . $period_to . ', lead_status=' . $lead_status . ', lead_source=' . $lead_source);
+     
+         // Build your query with filters
+         $this->db->select('l.id AS lead_id, c.userid AS customer_id, ls.name AS lead_status, lsrc.name AS lead_source ');
+         $this->db->from('tblleads l');
+         $this->db->join('tblclients c', 'c.userid = l.client_id', 'left');
+         $this->db->join('tblleads_status ls', 'ls.id = l.status', 'left');
+         $this->db->join('tblleads_sources lsrc', 'lsrc.id = l.source', 'left');
+        //  $this->db->join('tblclient_worflow_statuses lw', 'lw.lead_id = l.id', 'left');  // Update this join based on actual DB structure
+        //  $this->db->join('tblclient_survey_statuses lsrv', 'lsrv.lead_id = l.id', 'left');  // Update this join based on actual DB structure
+     
+         // Apply filters
+         if (!empty($period_from) && !empty($period_to)) {
+             $this->db->where('l.dateadded >=', $period_from);
+             $this->db->where('l.dateadded <=', $period_to);
+         }
+         if (!empty($lead_status)) {
+             $this->db->where('l.status', $lead_status);
+         }
+         if (!empty($lead_source)) {
+             $this->db->where('l.source', $lead_source);
+         }
+     
+         $query = $this->db->get();
+         $data = $query->result_array();
+     
+         // Return data as JSON for DataTable
+         header('Content-Type: application/json');
+         echo json_encode(['data' => $data]);
+         exit;
+     }
+     
+ 
 }
