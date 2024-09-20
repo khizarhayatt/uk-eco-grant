@@ -41,8 +41,8 @@
                                     <th>Customer ID</th>
                                     <th>Lead Status</th>
                                     <th>Lead Source</th>
-                                    <th>Last Workflow</th>
-                                    <th>Last Survey</th>
+                                    <!-- <th>Last Workflow</th>
+                                    <th>Last Survey</th> -->
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -59,57 +59,74 @@
     console.log('<?php echo admin_url('reports/workflows_report_data'); ?>');
 
     $(function() {
-    // Destroy existing DataTable instance if it exists
-    if ($.fn.DataTable.isDataTable('#leads-report-table')) {
-        $('#leads-report-table').DataTable().clear().destroy();
-    }
- 
-    var table = $('#leads-report-table').DataTable({
-        "processing": true,
-        "serverSide": false,
-        "ajax": {
-            "url": '<?php echo admin_url('reports/workflows_report_data'); ?>',
-            "type": "POST",
-            "dataSrc": "data", 
-            "data": function (d) {
-                d.period_from = $('#period-from').val();
-                d.period_to = $('#period-to').val();
-                d.lead_status = $('select[name="lead_add_edit_status"]').val();
-                d.lead_source = $('select[name="lead_add_edit_source"]').val();
-            },
-            "error": function(jqXHR, textStatus, errorThrown) {
-                console.error("Error fetching data: " + textStatus, errorThrown); 
-            }
-        },
-        "columns": [
-            { 
-                "data": null, // For auto-numbering rows
-                "render": function (data, type, row, meta) {
-                    return meta.row + 1;
+        // Destroy existing DataTable instance if it exists
+        if ($.fn.DataTable.isDataTable('#leads-report-table')) {
+            $('#leads-report-table').DataTable().clear().destroy();
+        }
+
+        // Initialize DataTable
+        var table = $('#leads-report-table').DataTable({
+            "processing": true,
+            "serverSide": false, // Client-side processing
+            "ajax": {
+                "url": '<?php echo admin_url('reports/workflows_report_data'); ?>',
+                "type": "POST",
+                "dataSrc": function(json) {
+                    console.log('Received data:', json);
+
+                    // If there is an error, display an alert and return an empty array
+                    if (json.error) {
+                        console.error('Server returned an error:', json.error);
+                        alert(json.error); // Show error to user
+                        return [];
+                    }
+
+                    // Log each row for debugging
+                    json.data.forEach(row => {
+                        console.log(row);
+                    });
+
+                    // Return the data for the table
+                    return json.data || [];
+                },
+                "data": function(d) {
+                    d.period_from = $('#period-from').val();
+                    d.period_to = $('#period-to').val();
+                    d.lead_status = $('select[name="lead_add_edit_status"]').val();
+                    d.lead_source = $('select[name="lead_add_edit_source"]').val();
+                },
+                "error": function(jqXHR, textStatus, errorThrown) {
+                    console.error("Error fetching data: " + textStatus, errorThrown);
+                    console.error("Response: " + jqXHR.responseText);
+                    alert("An error occurred while fetching the report data.");
                 }
             },
-            { "data": "lead_id" },       
-            { "data": "customer_id" },   
-            { "data": "lead_status" },   
-            { "data": "lead_source" },   
-            // { "data": "last_workflow" }, 
-            // { "data": "last_survey" }    
-        ],
-        "order": [[1, 'asc']],
-        "language": {
-            "emptyTable": "No data available"
-        }
+            "columns": [
+                {
+                    "data": null, // For row index
+                    "render": function (data, type, row, meta) {
+                        return meta.row + 1; // Row index number
+                    }
+                },
+                { "data": "lead_id" },       // Lead ID
+                { "data": "customer_id", "defaultContent": "" }, // Customer ID (can be null)
+                { "data": "lead_status", "defaultContent": "" }, // Lead Status (can be null)
+                { "data": "lead_source", "defaultContent": "" }  // Lead Source (can be null)
+            ],
+            "order": [[1, 'asc']], // Order by Lead ID
+            "language": {
+                "emptyTable": "No data available"
+            }
+        });
+
+        // Apply filters and reload table
+        $('#apply_filters_leads').on('click', function(e) {
+            e.preventDefault();
+            table.ajax.reload(); // Reload the DataTable with the new filters
+        });
     });
 
-    // Reload DataTable when filters are applied
-    $('#apply_filters_leads').on('click', function(e) {
-        e.preventDefault();
-        table.ajax.reload();
-    });
-});
-
-
-
+    
 </script>
 
 </body>

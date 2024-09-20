@@ -1243,45 +1243,69 @@ class Reports extends AdminController
 
     /* Workflows Reports dATA */
      /* Workflows Reports Data */
-     public function workflows_report_data()
-     {
-        $period_from = date('Y-m-d', strtotime($this->input->post('period_from')));
-        $period_to = date('Y-m-d', strtotime($this->input->post('period_to')));
-        $lead_status = $this->input->post('lead_status');
-        $lead_source = $this->input->post('lead_source');
+     public function workflows_report_data() {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+    
+        try {
+            // Retrieve POST data with default fallbacks
+            $period_from = $this->input->post('period_from') ? date('Y-m-d', strtotime($this->input->post('period_from'))) : null;
+            $period_to = $this->input->post('period_to') ? date('Y-m-d', strtotime($this->input->post('period_to'))) : null;
+            $lead_status = $this->input->post('lead_status');
+            $lead_source = $this->input->post('lead_source');
+    
+            // Log the input for debugging
+            log_message('debug', 'Workflows report input - period_from: ' . $period_from . ', period_to: ' . $period_to . ', lead_status: ' . $lead_status . ', lead_source: ' . $lead_source);
+    
+            // Build the query
+            $this->db->select('l.id AS lead_id, c.userid AS customer_id, ls.name AS lead_status, lsrc.name AS lead_source', FALSE);
+            $this->db->from('tblleads l');
+            $this->db->join('tblclients c', 'c.userid = l.client_id', 'left');
+            $this->db->join('tblleads_status ls', 'ls.id = l.status', 'left');
+            $this->db->join('tblleads_sources lsrc', 'lsrc.id = l.source', 'left');
+    
+            // Apply filters if provided
+            if (!empty($period_from) && !empty($period_to)) {
+                $this->db->where('l.dateadded >=', $period_from);
+                $this->db->where('l.dateadded <=', $period_to);
+            }
+            if (!empty($lead_status)) {
+                $this->db->where('l.status', $lead_status);
+            }
+            if (!empty($lead_source)) {
+                $this->db->where('l.source', $lead_source);
+            }
+    
+            // Execute the query
+            $query = $this->db->get();
+    
+            // Check if query execution failed
+            if ($query === FALSE) {
+                throw new Exception($this->db->error()['message']);
+            }
+    
+            $data = $query->result_array();
+    
+            // Log the result count for debugging
+            log_message('debug', 'Workflows report result count: ' . count($data));
+    
+            // Send the data to the client
+            echo json_encode([
+                'data' => $data,
+                'recordsTotal' => count($data),
+                'recordsFiltered' => count($data)
+            ]);
+        } catch (Exception $e) {
+            // Log any errors and return an error message
+            log_message('error', 'Error in workflows_report_data: ' . $e->getMessage());
+            echo json_encode([
+                'error' => 'An error occurred while fetching data: ' . $e->getMessage(),
+                'data' => []
+            ]);
+        }
+    
+        exit;
+    }
+    
      
-         // Log the incoming filter data
-         log_message('debug', 'Filter Data: period_from=' . $period_from . ', period_to=' . $period_to . ', lead_status=' . $lead_status . ', lead_source=' . $lead_source);
-     
-         // Build your query with filters
-         $this->db->select('l.id AS lead_id, c.userid AS customer_id, ls.name AS lead_status, lsrc.name AS lead_source ');
-         $this->db->from('tblleads l');
-         $this->db->join('tblclients c', 'c.userid = l.client_id', 'left');
-         $this->db->join('tblleads_status ls', 'ls.id = l.status', 'left');
-         $this->db->join('tblleads_sources lsrc', 'lsrc.id = l.source', 'left');
-        //  $this->db->join('tblclient_worflow_statuses lw', 'lw.lead_id = l.id', 'left');  // Update this join based on actual DB structure
-        //  $this->db->join('tblclient_survey_statuses lsrv', 'lsrv.lead_id = l.id', 'left');  // Update this join based on actual DB structure
-     
-         // Apply filters
-         if (!empty($period_from) && !empty($period_to)) {
-             $this->db->where('l.dateadded >=', $period_from);
-             $this->db->where('l.dateadded <=', $period_to);
-         }
-         if (!empty($lead_status)) {
-             $this->db->where('l.status', $lead_status);
-         }
-         if (!empty($lead_source)) {
-             $this->db->where('l.source', $lead_source);
-         }
-     
-         $query = $this->db->get();
-         $data = $query->result_array();
-     
-         // Return data as JSON for DataTable
-         header('Content-Type: application/json');
-         echo json_encode(['data' => $data]);
-         exit;
-     }
-     
- 
 }
