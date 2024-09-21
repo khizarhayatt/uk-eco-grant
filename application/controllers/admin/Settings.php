@@ -227,4 +227,6 @@ class Settings extends AdminController
         set_alert('success', 'Sessions Cleared');
             redirect(admin_url('settings?group=info'));
     }
+
+    
 }

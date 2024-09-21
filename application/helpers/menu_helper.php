@@ -22,16 +22,19 @@ function app_init_admin_sidebar_menu_items()
             'badge'    => [],
         ]);
     }
-    if (
-        staff_can('view',  'customers')
-        || (have_assigned_customers()
-            || (!have_assigned_customers() && staff_can('create',  'customers')))
-    ) {
+    if (  staff_can('view',  'customers') || (have_assigned_customers()  || (!have_assigned_customers() && staff_can('create',  'customers')))  ) {
         $CI->app_menu->add_sidebar_menu_item('customers', [
             'name'     => _l('als_clients'),
             'href'     => admin_url('clients'),
             'position' => 45,
             'icon'     => 'fa-regular fa-user',
+            'badge'    => [],
+        ]);
+        $CI->app_menu->add_sidebar_menu_item('sms', [
+            'name'     =>  'SMS',
+            'href'     => admin_url('sms/send_custom_sms'),
+            'position' => 45,
+            'icon'     => 'fa-regular fa-comments',
             'badge'    => [],
         ]);
     }

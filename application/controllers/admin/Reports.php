@@ -1,7 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-
+use Twilio\Rest\Client;
 class Reports extends AdminController
 {
     /**
@@ -1240,6 +1240,43 @@ class Reports extends AdminController
         $data['sources']  = $this->leads_model->get_source();
         $this->load->view('admin/reports/workflows', $data);
     }
+
+    public function send_custom_sms()
+    { 
+        $this->load->view('admin/sms/send_sms' );
+    }
+
+    
+    function get_recent_messages() {
+        // Fetch environment variables for Twilio SID and Auth Token
+        $sid = "AC2b909efae40dc33154d9d2683811fb51";
+        $token = "c54b12085ed96809b79e99ef6359e120";
+        
+    
+        // Create a new Twilio client
+        $client = new Client($sid, $token);
+    
+        try {
+            // Fetch 10 recent messages from Twilio
+            $messages = $client->messages->read([], 10);
+    
+            if (!empty($messages)) {
+                // Display messages in a table format
+                foreach ($messages as $message) {
+                    echo '<tr>';
+                    echo '<td>' . $message->to . '</td>';         // Recipient phone number
+                    echo '<td>' . $message->body . '</td>';       // Message body
+                    echo '<td>' . date('Y-m-d H:i:s', strtotime($message->dateSent)) . '</td>'; // Date sent
+                    echo '</tr>';
+                }
+            } else {
+                echo '<tr><td colspan="3">No recent messages found.</td></tr>';
+            }
+        } catch (Exception $e) {
+            echo '<tr><td colspan="3">Error fetching messages: ' . $e->getMessage() . '</td></tr>';
+        }
+    }
+    
 
     /* Workflows Reports dATA */
      /* Workflows Reports Data */
