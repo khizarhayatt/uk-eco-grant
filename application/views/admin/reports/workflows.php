@@ -36,7 +36,7 @@
                         <table class="table dt-table" id="leads-report-table" data-order-col="1" data-order-type="asc">
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <!-- <th>#</th> -->
                                     <th>Lead ID</th>
                                     <th>Customer ID</th>
                                     <th>Lead Status</th>
@@ -72,7 +72,7 @@
                 "url": '<?php echo admin_url('reports/workflows_report_data'); ?>',
                 "type": "POST",
                 "dataSrc": function(json) {
-                    console.log('Received data:', json);
+                  
 
                     // If there is an error, display an alert and return an empty array
                     if (json.error) {
@@ -81,10 +81,7 @@
                         return [];
                     }
 
-                    // Log each row for debugging
-                    json.data.forEach(row => {
-                        console.log(row);
-                    });
+                   
 
                     // Return the data for the table
                     return json.data || [];
