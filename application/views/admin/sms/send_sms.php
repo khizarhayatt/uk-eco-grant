@@ -60,7 +60,7 @@
         var message = $('#message').val();
 
         $.ajax({
-            url: '<?= base_url('reports/send_sms') ?>', // Your PHP method URL
+            url: '<?= base_url('admin/reports/send_sms') ?>', // Your PHP method URL
             type: 'POST',
             data: {
                 to: to,

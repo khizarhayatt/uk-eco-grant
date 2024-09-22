@@ -1247,7 +1247,54 @@ class Reports extends AdminController
     }
 
     
-    function get_recent_messages() {
+    public function send_sms() {
+        $to = $this->input->post('to');
+        $message = $this->input->post('message');
+        $des = $this->input->post('des');
+
+        $response = $this->send_custom_sms_message($to, $message, $des);
+        echo json_encode($response);
+    }
+
+    private function send_custom_sms_message($to, $message, $des) {
+        $sid = "AC2b909efae40dc33154d9d2683811fb51";
+        $token = "c54b12085ed96809b79e99ef6359e120";
+        $from = '+447460985490';
+    
+        $contentSid = 'HX2901ee2fd4d5a0fbdbfc18e9057b3cc7';
+        $messagingServiceSid = 'MGa230b96deb08fedb8bb5011eec91ad94';
+    
+        $client = new Client($sid, $token);
+    
+        try {
+            // Clean the number for validation
+            $cleanedNumber = str_replace([' ', '-', '(', ')'], '', $to);
+    
+            if (preg_match('/^\+44\d{10,14}$/', $cleanedNumber)) {
+                $client->messages->create(
+                    $cleanedNumber,
+                    [
+                        'from' => $from,
+                        'body' => $message,
+                        'contentSid' => $contentSid,
+                        'contentVariables' => json_encode(["1" => $des]),
+                        'messagingServiceSid' => $messagingServiceSid
+                    ]
+                );
+            } else {
+                throw new Exception("Invalid UK number format");
+            }
+            return ['success' => true];
+        } catch (Exception $e) {
+            log_message('error', $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+
+
+    
+    public function get_recent_messages() {
         // Fetch environment variables for Twilio SID and Auth Token
         $sid = "AC2b909efae40dc33154d9d2683811fb51";
         $token = "c54b12085ed96809b79e99ef6359e120";

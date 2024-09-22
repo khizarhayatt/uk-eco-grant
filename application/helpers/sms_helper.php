@@ -222,7 +222,7 @@ if (!function_exists('send_whatsapp_task_message')) {
     }
 }
 
-if (!function_exists('send_sms_task_message')) {
+ 
     function send_sms_task_messages($to, $des)
     {
         // Get your Account SID and Auth Token from the environment variables
@@ -299,4 +299,4 @@ if (!function_exists('send_sms_task_message')) {
             return false;
         }
     }
-}
+ 
