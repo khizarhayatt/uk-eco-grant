@@ -32,7 +32,7 @@ function app_init_admin_sidebar_menu_items()
         ]);
         $CI->app_menu->add_sidebar_menu_item('sms', [
             'name'     =>  'SMS',
-            'href'     => admin_url('sms/send_custom_sms'),
+            'href'     => admin_url('reports/send_custom_sms'),
             'position' => 45,
             'icon'     => 'fa-regular fa-comments',
             'badge'    => [],

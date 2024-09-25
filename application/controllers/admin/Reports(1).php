@@ -1306,86 +1306,60 @@ class Reports extends AdminController
 
 
     
-    public function get_recent_messages() { 
-    $sid = "AC2b909efae40dc33154d9d2683811fb51";
-    $token = "c54b12085ed96809b79e99ef6359e120";
+     public function get_recent_messages() {
+        $sid = "AC2b909efae40dc33154d9d2683811fb51";
+        $token = "c54b12085ed96809b79e99ef6359e120";
     
-    $client = new Client($sid, $token);
-
-    // Set default values for pagination
-    $messages_per_page = 10; // Number of messages per page
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 0; // Get the page from the URL parameter or default to 0
-    $page_offset = $page * $messages_per_page; // Calculate offset based on the page number
-
-    try {
-        // Fetch recent messages from Twilio with pagination
-        $messages = $client->messages->read([], $messages_per_page, $page_offset);
-
-        $grouped_messages = [];
-        $total_messages = 0;
-
-        // Group messages by phone number
-        foreach ($messages as $message) {
-            $phone_number = $message->direction === 'inbound' ? $message->from : $message->to;
-            if (!isset($grouped_messages[$phone_number])) {
-                $grouped_messages[$phone_number] = [];
-            }
-            $grouped_messages[$phone_number][] = $message;
-            $total_messages++;
-        }
-
-        $output = '';
-
-        // Generate output for the grouped messages
-        if (!empty($grouped_messages)) {
-            foreach ($grouped_messages as $phone_number => $conversation) {
-                $output .= '<tr><th colspan="5">Conversation with ' . htmlspecialchars($phone_number) . '</th></tr>';
-                foreach ($conversation as $message) {
-                    $output .= '<tr>';
-                    $output .= '<td>' . ($message->direction === 'inbound' ? 'From' : 'To') . ': ' . htmlspecialchars($message->direction === 'inbound' ? $message->from : $message->to) . '</td>';
-                    $output .= '<td>' . htmlspecialchars($message->body) . '</td>';
-                    $output .= '<td>' . $message->dateSent->format('Y-m-d H:i:s') . '</td>';
-                    $output .= '<td>' . $message->direction . '</td>';
-                    $output .= '<td>' . $message->status . '</td>';
-                    $output .= '</tr>';
+        $client = new Client($sid, $token);
+    
+        try {
+            // Fetch recent messages from Twilio (increased to 50 for better grouping)
+            $messages = $client->messages->read([], 50);
+    
+            $grouped_messages = [];
+            $total_messages = 0;
+    
+            // Group messages by phone number
+            foreach ($messages as $message) {
+                $phone_number = $message->direction === 'inbound' ? $message->from : $message->to;
+                if (!isset($grouped_messages[$phone_number])) {
+                    $grouped_messages[$phone_number] = [];
                 }
-                $output .= '<tr><td colspan="5"><hr></td></tr>'; // Add a separator between conversations
+                $grouped_messages[$phone_number][] = $message;
+                $total_messages++;
             }
-        }
-
-        // Pagination controls (Previous and Next)
-        $output .= '<tr><td colspan="5">';
-        
-        // Display the "Previous" button if we are not on the first page
-        if ($page > 0) {
-            $output .= '<a href="?page=' . ($page - 1) . '">Previous</a>';
-        }
-
-        // Display the "Next" button if there are more messages to show
-        if ($total_messages == $messages_per_page) {
-            if ($page > 0) {
-                $output .= ' | '; // Add separator between Previous and Next
+    
+            $output = '';
+    
+            if (!empty($grouped_messages)) {
+                foreach ($grouped_messages as $phone_number => $conversation) {
+                    $output .= '<tr><th colspan="5">Conversation with ' . htmlspecialchars($phone_number) . '</th></tr>';
+                    foreach ($conversation as $message) {
+                        $output .= '<tr>';
+                        $output .= '<td>' . ($message->direction === 'inbound' ? 'From' : 'To') . ': ' . htmlspecialchars($message->direction === 'inbound' ? $message->from : $message->to) . '</td>';
+                        $output .= '<td>' . htmlspecialchars($message->body) . '</td>';
+                        $output .= '<td>' . $message->dateSent->format('Y-m-d H:i:s') . '</td>';
+                        $output .= '<td>' . $message->direction . '</td>';
+                        $output .= '<td>' . $message->status . '</td>';
+                        $output .= '</tr>';
+                    }
+                    $output .= '<tr><td colspan="5"><hr></td></tr>'; // Add a separator between conversations
+                }
             }
-            $output .= '<a href="?page=' . ($page + 1) . '">Next</a>';
+    
+            // Add debug information
+            $output .= '<tr><td colspan="5">Total messages processed: ' . $total_messages . '</td></tr>';
+            
+            if ($total_messages == 0) {
+                $output .= '<tr><td colspan="5">No recent messages found.</td></tr>';
+            }
+    
+            echo $output;
+    
+        } catch (Exception $e) {
+            echo '<tr><td colspan="5">Error fetching messages: ' . htmlspecialchars($e->getMessage()) . '</td></tr>';
         }
-
-        $output .= '</td></tr>';
-
-        // Add debug information
-        $output .= '<tr><td colspan="5">Total messages processed: ' . $total_messages . '</td></tr>';
-
-        if ($total_messages == 0) {
-            $output .= '<tr><td colspan="5">No recent messages found.</td></tr>';
-        }
-
-        echo $output;
-
-    } catch (Exception $e) {
-        // Display error if Twilio API call fails
-        echo '<tr><td colspan="5">Error fetching messages: ' . htmlspecialchars($e->getMessage()) . '</td></tr>';
     }
-}
-
 
     
 

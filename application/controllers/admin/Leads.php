@@ -58,6 +58,8 @@ class Leads extends AdminController
             ajax_access_denied();
         }
 
+        $output = App_table::find('leads')->output();
+        log_message('debug', 'Leads table output: ' . json_encode($output));
         App_table::find('leads')->output();
     }
 
@@ -1430,92 +1432,7 @@ class Leads extends AdminController
         $this->zip->clear_data();
     }
 
-    function get_leads_customers_table($CI)
-    {
-        // Load necessary libraries
-        $CI->load->database();
-        $CI->load->library('table');
-
-        // Set table formatting
-        $tmpl = array(
-            'table_open' => '<table class="table table-striped table-bordered">',
-            'thead_open' => '<thead>',
-            'thead_close' => '</thead>',
-            'heading_row_start' => '<tr>',
-            'heading_row_end' => '</tr>',
-            'heading_cell_start' => '<th>',
-            'heading_cell_end' => '</th>',
-            'tbody_open' => '<tbody>',
-            'tbody_close' => '</tbody>',
-            'row_start' => '<tr>',
-            'row_end' => '</tr>',
-            'cell_start' => '<td>',
-            'cell_end' => '</td>',
-            'row_alt_start' => '<tr>',
-            'row_alt_end' => '</tr>',
-            'cell_alt_start' => '<td>',
-            'cell_alt_end' => '</td>',
-            'table_close' => '</table>'
-        );
-
-        $CI->table->set_template($tmpl);
-
-        // Set table headings
-        $CI->table->set_heading('Lead ID', 'Customer ID', 'Lead Status', 'Lead Source', 'Last Workflow', 'Last Survey');
-
-        // Fetch data
-        $query = $CI->db->query("
-            SELECT 
-                l.id AS lead_id,
-                c.userid AS customer_id,
-                ls.name AS lead_status,
-                lsrc.name AS lead_source,
-                MAX(CASE 
-                    WHEN cws.status_type = 'under_installation' THEN 'Under Installation'
-                    WHEN cws.status_type = 'under_submission' THEN 'Under Submission'
-                    ELSE NULL 
-                END) AS last_workflow,
-                MAX(CASE 
-                    WHEN css.status_type = 'awaiting_submission' THEN 'Awaiting Submission'
-                    WHEN css.status_type = 'awaiting_doc_verification' THEN 'Awaiting Doc Verification'
-                    WHEN css.status_type = 'awaiting_installation' THEN 'Awaiting Installation'
-                    ELSE NULL 
-                END) AS last_survey
-            FROM 
-                tblleads l
-            LEFT JOIN 
-                tblclients c ON c.userid = l.client_id
-            LEFT JOIN 
-                tblleads_status ls ON ls.id = l.status
-            LEFT JOIN 
-                tblleads_sources lsrc ON lsrc.id = l.source
-            LEFT JOIN 
-                tblclient_worflow_statuses cws ON cws.customer_id = c.userid
-            LEFT JOIN 
-                tblclient_survey_statuses css ON css.customer_id = c.userid
-            GROUP BY 
-                l.id, c.userid, ls.name, lsrc.name
-            ORDER BY 
-                l.id ASC
-        ");
-
-        $result = $query->result_array();
-
-        // Generate table rows
-        foreach ($result as $row) {
-            $CI->table->add_row(
-                $row['lead_id'],
-                $row['customer_id'] ? $row['customer_id'] : 'N/A',
-                $row['lead_status'],
-                $row['lead_source'],
-                $row['last_workflow'] ? $row['last_workflow'] : 'N/A',
-                $row['last_survey'] ? $row['last_survey'] : 'N/A'
-            );
-        }
-
-        // Generate and return the table
-        return $CI->table->generate();
-    }
+     
 
 
 }

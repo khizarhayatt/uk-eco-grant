@@ -118,12 +118,12 @@ return App_table::find('leads')
             'JOIN ' . db_prefix() . 'leads_sources ON ' . db_prefix() . 'leads_sources.id = ' . db_prefix() . 'leads.source',
         ];
 
-        foreach ($custom_fields as $key => $field) {
-            $selectAs = (is_cf_date($field) ? 'date_picker_cvalue_' . $key : 'cvalue_' . $key);
-            array_push($customFieldsColumns, $selectAs);
-            array_push($aColumns, 'ctable_' . $key . '.value as ' . $selectAs);
-            array_push($join, 'LEFT JOIN ' . db_prefix() . 'customfieldsvalues as ctable_' . $key . ' ON ' . db_prefix() . 'leads.id = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
-        }
+        // foreach ($custom_fields as $key => $field) {
+        //     $selectAs = (is_cf_date($field) ? 'date_picker_cvalue_' . $key : 'cvalue_' . $key);
+        //     array_push($customFieldsColumns, $selectAs);
+        //     array_push($aColumns, 'ctable_' . $key . '.value as ' . $selectAs);
+        //     array_push($join, 'LEFT JOIN ' . db_prefix() . 'customfieldsvalues as ctable_' . $key . ' ON ' . db_prefix() . 'leads.id = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
+        // }
 
         $where  = [];
 
@@ -138,9 +138,9 @@ return App_table::find('leads')
         $aColumns = hooks()->apply_filters('leads_table_sql_columns', $aColumns);
 
         // Fix for big queries. Some hosting have max_join_limit
-        if (count($custom_fields) > 4) {
-            @$this->ci->db->query('SET SQL_BIG_SELECTS=1');
-        }
+        // if (count($custom_fields) > 4) {
+        //     @$this->ci->db->query('SET SQL_BIG_SELECTS=1');
+        // }
 
         $additionalColumns = hooks()->apply_filters('leads_table_additional_columns_sql', [
             'junk',
@@ -160,9 +160,6 @@ return App_table::find('leads')
         $rResult = $result['rResult'];
 
         foreach ($rResult as $aRow) {
-             if($aRow["is_converted"]=="1"){
-                continue;
-            }
             $row = [];
 
             $row[] = '<div class="checkbox"><input type="checkbox" value="' . $aRow['id'] . '"><label></label></div>';
@@ -186,8 +183,7 @@ return App_table::find('leads')
             }
 
             if ($aRow['addedfrom'] == get_staff_user_id() || $has_permission_delete) {
-               // $nameRow .= ' | <a href="' . admin_url('leads/delete/' . $aRow['id']) . '" class="_delete text-danger">' . _l('delete') . '</a>';
-               $nameRow .= ' | <button style="color:red; border:0px"  onclick="deleteLead('.$aRow['id'].')">' . _l('delete') . '</button>';
+                $nameRow .= ' | <a href="' . admin_url('leads/delete/' . $aRow['id']) . '" class="_delete text-danger">' . _l('delete') . '</a>';
             }
             $nameRow .= '</div>';
 
@@ -274,9 +270,9 @@ return App_table::find('leads')
             $row[] = '<span data-toggle="tooltip" data-title="' . e(_dt($aRow['dateadded'])) . '" class="text-has-action is-date">' . e(time_ago($aRow['dateadded'])) . '</span>';
 
             // Custom fields add values
-            foreach ($customFieldsColumns as $customFieldColumn) {
-                $row[] = (strpos($customFieldColumn, 'date_picker_') !== false ? _d($aRow[$customFieldColumn]) : $aRow[$customFieldColumn]);
-            }
+            // foreach ($customFieldsColumns as $customFieldColumn) {
+            //     $row[] = (strpos($customFieldColumn, 'date_picker_') !== false ? _d($aRow[$customFieldColumn]) : $aRow[$customFieldColumn]);
+            // }
 
             $row['DT_RowId'] = 'lead_' . $aRow['id'];
 
